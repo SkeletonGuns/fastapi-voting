@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import HTTPException
+from src.fastapi_voting.app.core.exception import UserNotFound, UserAlreadyExist, InvalidLogin
 
 from src.fastapi_voting.app.repositories.user_repo import UserRepo
 
@@ -34,11 +34,11 @@ class UserService:
 
         if user_by_phone:
             logger.debug(f"Пользователь с номером телефона <{user_data['phone']}> уже существует")
-            raise HTTPException(status_code=401, detail="Некорректные почта или телефон")
+            raise UserAlreadyExist()
 
         if user_by_email:
             logger.debug(f"Пользователь с таким адресом электронной почты <{user_data['email']}> уже существует")
-            raise HTTPException(status_code=401, detail="Некорректные почта или телефон")
+            raise UserAlreadyExist()
 
         # --- Регистрация пользователя ---
         result: User = await self.user_repo.add_user(user_data)
@@ -57,12 +57,12 @@ class UserService:
         user_by_email: User = await self.user_repo.get_by_item(column=self.user_repo.model.email, item=data["email"])
         if not user_by_email:
             logger.debug(f"Пользователя с почтой <{data['email']}> не существует")
-            raise HTTPException(status_code=401, detail="Неверные учётные данные")
+            raise UserNotFound()
 
         current_password_is_valid: bool = user_by_email.verify_password(password=data["password"])
         if not current_password_is_valid:
             logger.debug(f"Введён неверный пароль для пользователя с ID {user_by_email.id}")
-            raise HTTPException(status_code=401, detail=f"Неверные учётные данные")
+            raise InvalidLogin()
 
         # --- Формирование ответа ---
         return user_by_email
