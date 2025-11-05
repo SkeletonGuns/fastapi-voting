@@ -1,4 +1,4 @@
-from sqlalchemy import select, and_, or_
+from sqlalchemy import select, and_, or_, String, TEXT, cast
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.fastapi_voting.app.models.voting import Voting
@@ -19,7 +19,7 @@ class VotingRepo(Base):
         await self.session.commit()
 
 
-    async def available_votings(self, user_id: int):
+    async def available_votings(self, user_id: int, find: str | None):
         """Возвращает перечень доступных конкретному пользователю голосований"""
 
         # --- Формирование фильтрующего запроса ---
@@ -29,8 +29,24 @@ class VotingRepo(Base):
                 or_(
                     Voting.creator_id == user_id,
                     User.id == user_id,
+                    Voting.public == True
                  )
             )
         ).distinct()
+
+        # --- Выборка по значению для поиска ---
+        if find is not None:
+            search_pattern = f"%{find}%"
+            search_condition = list()
+
+            for column in Voting.__table__.columns:
+                if isinstance(column.type, (TEXT, String)):
+                    search_condition.append(column.ilike(search_pattern))
+                else:
+                    search_condition.append(cast(column, String).ilike(search_pattern))
+
+            query = query.filter(or_(*search_condition))
+
+        # --- Ответ ---
         result = await self.session.execute(query)
         return result.scalars().all()

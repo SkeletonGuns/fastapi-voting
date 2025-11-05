@@ -35,7 +35,7 @@ class VotingService:
         return True
 
 
-    async def get_all_votings(self, user_id :int):
-        votings = await self.voting_repo.available_votings(user_id)
+    async def get_all_votings(self, user_id :int, find: str | None):
+        votings = await self.voting_repo.available_votings(user_id, find)
 
         return votings

@@ -21,14 +21,17 @@ voting_router = APIRouter(
 # --- Обработчики ---
 @voting_router.get(path="/all", response_model=list[VotingSchema])
 async def get_all_votings(
+        request: Request,
         access_payload: AccessRequiredAnnotation,
         voting_service: VotingServiceAnnotation
 ):
-    # TODO: Полнотекстовый поиск
     # TODO: Пагинация
-    # --- Работа сервиса ---
+    # --- Данные запроса ---
     user_id = access_payload["sub"]
-    votings = await voting_service.get_all_votings(user_id)
+    find = request.query_params.get("find")
+
+    # --- Работа сервиса ---
+    votings = await voting_service.get_all_votings(user_id, find)
 
     # --- Ответ ---
     return votings
