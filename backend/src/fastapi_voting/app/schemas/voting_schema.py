@@ -3,21 +3,8 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-# --- Схемы для создания голосования ---
-class InputCreateVotingSchema(BaseModel):
-    title: str
-    theme: str
-    public: bool
-    quorum: int
-
-    registration_start: datetime
-    registration_end: datetime
-
-    voting_start: datetime
-    voting_end: datetime
-
-
-class ResponseCreateVotingSchema(BaseModel):
+# --- Общая схема со всеми полями ---
+class VotingSchema(BaseModel):
     id: int
     title: str
     theme: str
@@ -34,6 +21,21 @@ class ResponseCreateVotingSchema(BaseModel):
         from_attributes = True
 
 
+# --- Схемы для создания голосования ---
+class InputCreateVotingSchema(BaseModel):
+    title: str
+    theme: str
+    public: bool
+    quorum: int
+
+    registration_start: datetime
+    registration_end: datetime
+
+    voting_start: datetime
+    voting_end: datetime
+
+
 # --- Схема для удаления пользования ---
 class InputDeleteVotingSchema(BaseModel):
     id: int
+
