@@ -1,4 +1,4 @@
-from sqlalchemy import select, and_, or_, String, TEXT, cast
+from sqlalchemy import select, and_, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.fastapi_voting.app.models.voting import Voting
@@ -36,16 +36,7 @@ class VotingRepo(Base):
 
         # --- Выборка по значению для поиска ---
         if find is not None:
-            search_pattern = f"%{find}%"
-            search_condition = list()
-
-            for column in Voting.__table__.columns:
-                if isinstance(column.type, (TEXT, String)):
-                    search_condition.append(column.ilike(search_pattern))
-                else:
-                    search_condition.append(cast(column, String).ilike(search_pattern))
-
-            query = query.filter(or_(*search_condition))
+            query = self.search_all(model=Voting, query=query, find=find)
 
         # --- Ответ ---
         result = await self.session.execute(query)
