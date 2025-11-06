@@ -57,7 +57,7 @@ class VotingService:
         has_next: bool = True if len(votings) > settings.PER_PAGE else False
 
         return ResponseAllVotingsSchema(
-            items=votings,
+            items=votings[:settings.PER_PAGE],
             pagination={
                 "has_prev": has_prev,
                 "has_next": has_next,
