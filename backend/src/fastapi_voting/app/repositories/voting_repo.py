@@ -1,5 +1,9 @@
-from sqlalchemy import select, and_, or_
+import logging
+
+from sqlalchemy import select, and_, or_, func
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.fastapi_voting.app.core.settings import get_settings
 
 from src.fastapi_voting.app.models.voting import Voting
 from src.fastapi_voting.app.models.user import User
@@ -7,6 +11,11 @@ from src.fastapi_voting.app.models.user import User
 from src.fastapi_voting.app.repositories.base_repo import Base
 
 
+# --- Инструментарий ---
+logger = logging.getLogger("fastapi-voting")
+settings = get_settings()
+
+# --- Репозиторий ---
 class VotingRepo(Base):
 
     def __init__(self, session: AsyncSession):
@@ -14,12 +23,13 @@ class VotingRepo(Base):
 
 
     async def delete(self, voting: Voting) -> None:
+        """Выполняет мягкое удаление указанного голосования"""
         voting.deleted = True
         self.session.add(voting)
         await self.session.commit()
 
 
-    async def available_votings(self, user_id: int, find: str | None):
+    async def available_votings(self, user_id: int, find: str | None, page: int):
         """Возвращает перечень доступных конкретному пользователю голосований"""
 
         # --- Формирование фильтрующего запроса ---
@@ -34,10 +44,16 @@ class VotingRepo(Base):
             )
         ).distinct()
 
-        # --- Выборка по значению для поиска ---
-        if find is not None:
-            query = self.search_all(model=Voting, query=query, find=find)
+        # --- Запрос на кол-во доступных записей ---
+        total_count_query = select(func.count()).select_from(query.subquery())
+        total_count = await self.session.execute(total_count_query)
+
+        # --- Выборка по условию поиска и пагинации ---
+        if find:
+            query = self.search_all(query=query, find=find)
+
+        query = self.paginate(query, page)
 
         # --- Ответ ---
         result = await self.session.execute(query)
-        return result.scalars().all()
+        return result.scalars().all(), total_count.scalar()
