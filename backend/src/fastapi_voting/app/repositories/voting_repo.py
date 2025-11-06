@@ -44,14 +44,15 @@ class VotingRepo(Base):
             )
         ).distinct()
 
+        # --- Выборка по условию поиска ---
+        if find:
+            query = self.search_all(query=query, find=find)
+
         # --- Запрос на кол-во доступных записей ---
         total_count_query = select(func.count()).select_from(query.subquery())
         total_count = await self.session.execute(total_count_query)
 
-        # --- Выборка по условию поиска и пагинации ---
-        if find:
-            query = self.search_all(query=query, find=find)
-
+        # --- Применение пагинации ---
         query = self.paginate(query, page)
 
         # --- Ответ ---
