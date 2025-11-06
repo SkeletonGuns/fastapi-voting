@@ -1,12 +1,24 @@
+import logging
+import math
+
 from fastapi import HTTPException
 
-from src.fastapi_voting.app.schemas.voting_schema import InputCreateVotingSchema
+from src.fastapi_voting.app.core.settings import get_settings
 
 from src.fastapi_voting.app.repositories.voting_repo import VotingRepo
 
 from src.fastapi_voting.app.models import Voting
 
+from src.fastapi_voting.app.schemas.voting_schema import ResponseAllVotingsSchema
 
+from src.fastapi_voting.app.core.exception import VotingNotFound
+
+
+# --- Инструментарий ---
+logger = logging.getLogger("fastapi-voting")
+settings = get_settings()
+
+# --- Сервис ---
 class VotingService:
 
     def __init__(self, voting_repo: VotingRepo):
@@ -26,7 +38,7 @@ class VotingService:
         # --- Проверка на существование записи ---
         voting = await self.voting_repo.get_by_id(voting_id)
         if (voting is None) or (voting.deleted):
-            raise HTTPException(status_code=404, detail="Голосования не существует")
+            raise VotingNotFound()
 
         # --- Работа репозитория ----
         await self.voting_repo.delete(voting)
@@ -35,7 +47,20 @@ class VotingService:
         return True
 
 
-    async def get_all_votings(self, user_id :int, find: str | None):
-        votings = await self.voting_repo.available_votings(user_id, find)
+    async def get_all_votings(self, user_id: int, find: str | None, page: int) -> ResponseAllVotingsSchema:
 
-        return votings
+        # --- Работа репозитория ---
+        votings, total_count = await self.voting_repo.available_votings(user_id, find, page)
+
+        # --- Формирование ответа сервиса ---
+        has_prev: bool = True if page > 1 else False
+        has_next: bool = True if len(votings) > settings.PER_PAGE else False
+
+        return ResponseAllVotingsSchema(
+            items=votings[:settings.PER_PAGE],
+            pagination={
+                "has_prev": has_prev,
+                "has_next": has_next,
+                "total_count": math.ceil(total_count / settings.PER_PAGE),
+            }
+        )

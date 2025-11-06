@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Query, Header
 
 from src.fastapi_voting.app.di.annotations import (
     VotingServiceAnnotation,
@@ -9,6 +9,7 @@ from src.fastapi_voting.app.schemas.voting_schema import (
     VotingSchema,
     InputCreateVotingSchema,
     InputDeleteVotingSchema,
+    ResponseAllVotingsSchema,
 )
 
 
@@ -19,22 +20,24 @@ voting_router = APIRouter(
 )
 
 # --- Обработчики ---
-@voting_router.get(path="/all", response_model=list[VotingSchema])
+@voting_router.get(path="/all", response_model=ResponseAllVotingsSchema)
 async def get_all_votings(
-        request: Request,
         access_payload: AccessRequiredAnnotation,
-        voting_service: VotingServiceAnnotation
+        voting_service: VotingServiceAnnotation,
+
+        find: str = Query(default=None, description="Строковое условие поиска"),
+        page: int = Query(default=1, description="Целочисленное значение текущей страницы для пагинации"),
+
+        access_token: str = Header(default=None, description="JWT-токен"),
 ):
-    # TODO: Пагинация
     # --- Данные запроса ---
     user_id = access_payload["sub"]
-    find = request.query_params.get("find")
 
     # --- Работа сервиса ---
-    votings = await voting_service.get_all_votings(user_id, find)
+    response = await voting_service.get_all_votings(user_id, find, page)
 
     # --- Ответ ---
-    return votings
+    return response
 
 
 @voting_router.post(path="/create", response_model=VotingSchema)
