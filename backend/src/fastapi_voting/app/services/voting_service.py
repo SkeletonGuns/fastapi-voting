@@ -13,13 +13,9 @@ class VotingService:
         self.voting_repo = voting_repo
 
 
-    async def create_voting(self, voting_data: InputCreateVotingSchema) -> Voting:
-
-        # --- Первичные данные ---
-        data = voting_data.model_dump()
-
+    async def create_voting(self, voting_data: dict) -> Voting:
         # --- Работа репозитория ----
-        voting = await self.voting_repo.add_instance(data)
+        voting = await self.voting_repo.add_instance(voting_data)
 
         # --- Ответ сервиса ---
         return voting
@@ -37,3 +33,9 @@ class VotingService:
 
         # --- Ответ сервиса ---
         return True
+
+
+    async def get_all_votings(self, user_id :int, find: str | None):
+        votings = await self.voting_repo.available_votings(user_id, find)
+
+        return votings

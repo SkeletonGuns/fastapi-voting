@@ -1,4 +1,4 @@
-from sqlalchemy import select, text
+from sqlalchemy import select, String, TEXT, cast, or_
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,3 +38,25 @@ class Base:
         result = await self.session.execute(query)
         return result.scalars().first()
 
+
+    async def paginate(self, query):
+        # TODO: Реализовать алгоритм пагинации
+        pass
+
+    async def search_all(self, model, query, find):
+        """Выборка значений по заданному условию поиска"""
+
+        # --- Вспомогательные значение ---
+        search_pattern = f"%{find}%"
+        search_condition = list()
+
+        # --- Процесс формирование запроса ---
+        for column in model.__table__.columns:
+            if isinstance(column.type, (TEXT, String)):
+                search_condition.append(column.ilike(search_pattern))
+            else:
+                search_condition.append(cast(column, String).ilike(search_pattern))
+
+        # --- Возврат продекорированного запроса ---
+        query = query.filter(or_(*search_condition))
+        return query
