@@ -44,7 +44,7 @@ class TokenService:
                 "sub": str(user_id),
                 "token_type": "refresh",
                 "jti": str(uuid.uuid4()),
-                "exp": str(exp.timestamp()),
+                "exp": int(exp.timestamp()),
                 "iat": int(now.timestamp())
             }
             refresh_token: str = jwt.encode(refresh_payload, settings.JWT_SECRET_KEY, algorithm="HS256")
