@@ -56,7 +56,7 @@ class Base:
         limit = settings.PER_PAGE + 1
 
         # --- Формирование запроса ---
-        query = query.order_by(self.model.registration_start.desc()).offset(offset).limit(limit)
+        query = query.order_by(self.model.created_at.desc()).offset(offset).limit(limit)
 
         # --- Возврат продекорированного запроса ---
         return query

@@ -51,6 +51,9 @@ fastapi-voting                          # Корневой каталог Poetry
 APP_HOST=127.0.0.1
 APP_PORT=5000
 
+# Конфигурация пагинации
+PER_PAGE=5
+
 # ACCESS и REFRESH токены
 JWT_SECRET_KEY=c05da040fc7bd6f8f8964405f94d6f4b
 JWT_ACCESS_EXPIRE_MINUTES=30
