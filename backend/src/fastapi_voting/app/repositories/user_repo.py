@@ -1,4 +1,5 @@
-from sqlalchemy import select
+from sqlalchemy import select, update
+
 
 from src.fastapi_voting.app.repositories.base_repo import Base
 
@@ -14,7 +15,7 @@ class UserRepo(Base):
 
     async def add_user(self, data: dict) -> User:
         password = data.pop("password")
-        user = User(**data)
+        user = self.model(**data)
         user.set_hash_password(password)
 
         self.session.add(user)
@@ -23,4 +24,14 @@ class UserRepo(Base):
         return user
 
 
+    async def change_credentials(self, data: dict, id: int) -> User:
 
+        # --- Формирование и исполнение запроса ---
+        query = update(self.model).where(self.model.id == id,).values(**data)
+        await self.session.execute(query)
+
+        # --- Формирование и исполнение запроса на данные обновлённого пользователя ---
+        user = await self.session.get(self.model, id)
+
+        # --- Результат ---
+        return user

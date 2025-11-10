@@ -3,6 +3,7 @@ import logging
 from src.fastapi_voting.app.core.settings import get_settings
 
 from sqlalchemy import select, String, TEXT, cast, or_
+from sqlalchemy.sql import exists
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,6 +26,12 @@ class Base:
         await self.session.commit()
 
         return instance
+
+
+    async def exist_by_id(self, id: int) -> bool:
+        query = select(exists().where(self.model.id == id))
+        result = await self.session.execute(query)
+        return result.scalar()
 
 
     async def get_all(self):
