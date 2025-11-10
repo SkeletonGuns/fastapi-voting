@@ -127,8 +127,8 @@ async def user_refresh(
 
     response = JSONResponse(content=content)
     response.headers["X-CSRF-Token"] = csrf_token
-    response.set_cookie(key="fastapi-csrf-token", value=signed_csrf, httponly=True, expires=cookie_expire)
-    response.set_cookie(key="refresh-token", value=tokens["refresh_token"], httponly=True, expires=cookie_expire)
+    response.set_cookie(key="fastapi-csrf-token", value=signed_csrf, httponly=True, expires=cookie_expire, samesite="none")
+    response.set_cookie(key="refresh-token", value=tokens["refresh_token"], httponly=True, expires=cookie_expire, samesite="none")
 
     # --- Ответ ---
     return response
