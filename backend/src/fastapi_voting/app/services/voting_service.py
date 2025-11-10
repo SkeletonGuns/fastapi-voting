@@ -1,8 +1,6 @@
 import logging
 import math
 
-from fastapi import HTTPException
-
 from src.fastapi_voting.app.core.settings import get_settings
 
 from src.fastapi_voting.app.repositories.voting_repo import VotingRepo
@@ -38,7 +36,7 @@ class VotingService:
         # --- Проверка на существование записи ---
         voting = await self.voting_repo.get_by_id(voting_id)
         if (voting is None) or (voting.deleted):
-            raise VotingNotFound()
+            raise VotingNotFound(log_message=f"Голосования с ID {voting_id} не существует.")
 
         # --- Работа репозитория ----
         await self.voting_repo.delete(voting)

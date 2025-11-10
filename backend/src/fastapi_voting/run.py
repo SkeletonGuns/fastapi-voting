@@ -13,11 +13,15 @@ settings = get_settings()
 
 
 def main(reload: bool = False, host: str = settings.APP_HOST):
+
+    # --- Логирование ---
     logger.info("Запуск приложения fastapi-voting")
 
+    # --- Вспомогательные данные ---
     ssl_keypath = settings.TLS_PRIVATE_KEY
-    ssl_certpath=settings.TLS_CERTIFICATE
+    ssl_certpath = settings.TLS_CERTIFICATE
 
+    # --- Инструкция запуска сервера ---
     uvicorn.run(
         "src.fastapi_voting.app.main.main:fastapi_app",
         host=host,
@@ -30,6 +34,9 @@ def main(reload: bool = False, host: str = settings.APP_HOST):
         ssl_keyfile=ssl_keypath,
         ssl_certfile=ssl_certpath
     )
+
+    # --- Логирование ---
+    logger.info("Работа приложения fastapi-voting завершена.")
 
 
 # --- Точка входа в приложение ---
