@@ -5,9 +5,7 @@ from src.fastapi_voting.app.repositories.department_repo import DepartmentRepo
 from src.fastapi_voting.app.schemas.department_schema import ResponseAllDepartmentsSchema
 
 
-# --- Инициализация первичных данных ---
-logger = logging.getLogger("fastapi-voting")
-
+# --- Сервис ---
 class DepartmentService:
 
     def __init__(self, department_repo: DepartmentRepo):

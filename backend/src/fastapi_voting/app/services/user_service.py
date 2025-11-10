@@ -29,16 +29,14 @@ class UserService:
         user_data['role'] = RolesEnum(user_data['role'])
 
         # --- Проверка на уникальность пользователя ---
-        user_by_phone: User = await self.user_repo.get_by_item(column=self.user_repo.model.phone, item=user_data["phone"])
+        user_by_phone: User = await self.user_repo.get_by_item(column=self.user_repo.model.phone, item=user_data["phone"]) # TODO: Оптимизировать
         user_by_email: User = await self.user_repo.get_by_item(column=self.user_repo.model.email, item=user_data["email"])
 
         if user_by_phone:
-            logger.debug(f"Пользователь с номером телефона <{user_data['phone']}> уже существует")
-            raise UserAlreadyExist()
+            raise UserAlreadyExist(f"Пользователь с номером телефона <{user_data['phone']}> уже существует")
 
         if user_by_email:
-            logger.debug(f"Пользователь с таким адресом электронной почты <{user_data['email']}> уже существует")
-            raise UserAlreadyExist()
+            raise UserAlreadyExist(f"Пользователь с таким адресом электронной почты <{user_data['email']}> уже существует")
 
         # --- Регистрация пользователя ---
         result: User = await self.user_repo.add_user(user_data)
@@ -56,13 +54,11 @@ class UserService:
         # --- Проверки на существование пользователя и корректность пароля ---
         user_by_email: User = await self.user_repo.get_by_item(column=self.user_repo.model.email, item=data["email"])
         if not user_by_email:
-            logger.debug(f"Пользователя с почтой <{data['email']}> не существует")
-            raise UserNotFound()
+            raise UserNotFound(log_message=f"Пользователя с почтой <{data['email']}> не существует")
 
         current_password_is_valid: bool = user_by_email.verify_password(password=data["password"])
         if not current_password_is_valid:
-            logger.debug(f"Введён неверный пароль для пользователя с ID {user_by_email.id}")
-            raise InvalidLogin()
+            raise InvalidLogin(log_message=f"Введён неверный пароль для пользователя с ID {user_by_email.id}")
 
         # --- Формирование ответа ---
         return user_by_email

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from logging import getLogger
 
 from src.fastapi_voting.app.main.middlewares import setup_middlewares
+from src.fastapi_voting.app.main.handlers import setup_handlers
 
 from src.fastapi_voting.app.api.user_api import user_router
 from src.fastapi_voting.app.api.department_api import department_router
@@ -20,9 +21,9 @@ fastapi_app = FastAPI(
     redoc_url='/redoc',
 )
 
-
-# --- Регистрация Middleware ---
+# --- Регистрация Middleware и Handlers ---
 setup_middlewares(fastapi_app)
+setup_handlers(fastapi_app)
 
 # --- Вторичные данные ---
 v1_url_prefix = '/api/v1'

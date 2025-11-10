@@ -2,7 +2,7 @@ import logging
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, status, Request
+from fastapi import APIRouter, status, Depends
 from fastapi.responses import JSONResponse
 
 from src.fastapi_voting.app.core.settings import get_settings
@@ -14,7 +14,7 @@ from src.fastapi_voting.app.di.annotations import (
 
     AccessRequiredAnnotation,
     RefreshRequiredAnnotation,
-    CSRFValidAnnotation
+    CSRFValidAnnotation,
 )
 
 from src.fastapi_voting.app.schemas.user_schema import InputCreateUserSchema, OutputCreateUserSchema
@@ -35,17 +35,17 @@ user_router = APIRouter(
 
 
 # --- Регистрация пользователя ---
-@user_router.post("/register", response_model=OutputCreateUserSchema)
+@user_router.post("/register", response_model=OutputCreateUserSchema, status_code=status.HTTP_201_CREATED)
 async def user_register(
         data: InputCreateUserSchema,
-        user_service: UserServiceAnnotation
+        user_service: UserServiceAnnotation,
 ):
     registered_user = await user_service.register(data)
     return registered_user
 
 
 # --- Авторизация пользователя ---
-@user_router.post("/login", response_model=ResponseLoginUserSchema)
+@user_router.post("/login", response_model=ResponseLoginUserSchema, status_code=status.HTTP_200_OK)
 async def user_login(
         data: InputLoginUserSchema,
 
@@ -79,7 +79,7 @@ async def user_login(
 
 
 # --- Выход из сессии ---
-@user_router.post("/access-logout")
+@user_router.post("/access-logout", status_code=status.HTTP_200_OK)
 async def user_acs_logout(
         access_payload: AccessRequiredAnnotation,
         token_service : TokenServiceAnnotation,
@@ -88,10 +88,10 @@ async def user_acs_logout(
     await token_service.revoke_token(access_payload)
 
     # --- Ответ ---
-    return {"message": "access revoked"}
+    return {"message": "success"}
 
 
-@user_router.post("/refresh-logout")
+@user_router.post("/refresh-logout", status_code=status.HTTP_200_OK)
 async def user_ref_logout(
         csrf_is_valid: CSRFValidAnnotation,
         refresh_payload: RefreshRequiredAnnotation,
@@ -101,11 +101,11 @@ async def user_ref_logout(
     await token_service.revoke_token(refresh_payload)
 
     # --- Ответ ---
-    return {"message": "refresh revoked"}
+    return {"message": "success"}
 
 
 # --- Обновление сессии ---
-@user_router.post("/refresh", response_model=OutputRefreshUserSchema)
+@user_router.post("/refresh", response_model=OutputRefreshUserSchema, status_code=status.HTTP_200_OK)
 async def user_refresh(
         csrf_is_valid: CSRFValidAnnotation,
         refresh_payload: RefreshRequiredAnnotation,
@@ -127,8 +127,8 @@ async def user_refresh(
 
     response = JSONResponse(content=content)
     response.headers["X-CSRF-Token"] = csrf_token
-    response.set_cookie(key="fastapi-csrf-token", value=signed_csrf, httponly=True, expires=cookie_expire, samesite="none")
-    response.set_cookie(key="refresh-token", value=tokens["refresh_token"], httponly=True, expires=cookie_expire, samesite="none")
+    response.set_cookie(key="fastapi-csrf-token", value=signed_csrf, httponly=True, expires=cookie_expire, secure=True, samesite="none")
+    response.set_cookie(key="refresh-token", value=tokens["refresh_token"], httponly=True, expires=cookie_expire, secure=True, samesite="none")
 
     # --- Ответ ---
     return response
