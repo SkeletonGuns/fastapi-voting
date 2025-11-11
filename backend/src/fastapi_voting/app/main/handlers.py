@@ -16,17 +16,13 @@ def setup_handlers(app: FastAPI):
         # --- Внедрение зависимости ---
         logger = LoggingExceptionDI("HTTP")(request=request)
 
-        # --- Первичные данные ---
-        log_detail = exc.detail.split(". ")[1]
-        response_detail = exc.detail.split(". ")[0]
-
         # --- Логирование ---
-        logger.error(detail=log_detail)
+        logger.error(detail=exc.log_detail)
 
         # --- Формирование ответа ---
         return JSONResponse(
             status_code=exc.status_code,
-            content={"detail": response_detail},
+            content={"detail": exc.response_detail},
             headers=exc.headers,
         )
 

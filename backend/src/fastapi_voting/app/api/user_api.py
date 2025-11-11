@@ -2,7 +2,7 @@ import logging
 
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, status, Depends
+from fastapi import APIRouter, status, Header
 from fastapi.responses import JSONResponse
 
 from src.fastapi_voting.app.core.settings import get_settings
@@ -17,9 +17,10 @@ from src.fastapi_voting.app.di.annotations import (
     CSRFValidAnnotation,
 )
 
-from src.fastapi_voting.app.schemas.user_schema import InputCreateUserSchema, OutputCreateUserSchema
+from src.fastapi_voting.app.schemas.user_schema import InputCreateUserSchema
 from src.fastapi_voting.app.schemas.user_schema import InputLoginUserSchema, ResponseLoginUserSchema, UserSchema
 from src.fastapi_voting.app.schemas.user_schema import OutputRefreshUserSchema
+from src.fastapi_voting.app.schemas.user_schema import InputChangeCredentialsSchema
 
 
 # --- Инициализация первичных данных и вспомогательных инструментов---
@@ -35,7 +36,7 @@ user_router = APIRouter(
 
 
 # --- Регистрация пользователя ---
-@user_router.post("/register", response_model=OutputCreateUserSchema, status_code=status.HTTP_201_CREATED)
+@user_router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
 async def user_register(
         data: InputCreateUserSchema,
         user_service: UserServiceAnnotation,
@@ -132,3 +133,25 @@ async def user_refresh(
 
     # --- Ответ ---
     return response
+
+
+# -- Смена учётных данных ---
+@user_router.post("/profile/change-credentials", response_model=UserSchema, status_code=status.HTTP_200_OK)
+async def change_user_credentials(
+        user_service: UserServiceAnnotation,
+        access_payload: AccessRequiredAnnotation,
+
+        data: InputChangeCredentialsSchema,
+
+        access_token = Header(default=None, description="JWT-Токен"),
+):
+    # --- Работа со входными данными запроса ---
+    data = data.model_dump()
+    user_id = access_payload["sub"]
+
+    # Работа сервиса
+    user = await user_service.change_credentials(data, user_id)
+
+    # --- Ответ ---
+    return user
+
